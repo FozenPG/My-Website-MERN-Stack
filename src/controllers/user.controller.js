@@ -1,5 +1,5 @@
 const create = (req, res) => {
-    const {Name, UserName, Email, Password, Avatar, Background} = req.body
+    const { Name, UserName, Email, Password, Avatar, Background } = req.body
 
     if (!Name || !UserName || !Email || !Password || !Avatar || !Background) {
         res.status(400).json("Submit all fields to proceed!")
