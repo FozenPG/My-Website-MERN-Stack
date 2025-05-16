@@ -1,98 +1,83 @@
-const userService = require("../services/user.service")
-const mongoose = require("mongoose")
-
-function verifyId(id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return true
-    }
-    return false
-}
+import userService from "../services/user.service.js"
 
 const create = async (req, res) => {
-    const { name, username, email, password, avatar, background } = req.body
+    try {
 
-    if (!name || !username || !email || !password || !avatar || !background) {
-        res.status(400).json("Submit all fields to proceed!")
+        const { name, username, email, password, avatar, background } = req.body
+        if (!name || !username || !email || !password || !avatar || !background) {
+            res.status(400).json("Submit all fields to proceed!")
+        }
+        const user = await userService.createService(req.body)
+        if (!user) {
+            return res.status(400).send({ Message: "Error creating user" })
+        }
+        res.status(201).send({
+            message: "Usuario criado com sucesso!",
+            user: {
+                id: user._id,
+                name,
+                username,
+                email,
+                avatar,
+                background
+            }
+        })
+    } catch (err) {
+        res.status(500).send({ message: "Server internal error" })
+        console.log(err)
+    }
+}
+
+const findAll = async (req, res) => {
+
+    try {
+        const users = await userService.findAllService()
+        if (users === 0) {
+            return res.status(400).send({ message: "ther are no users in the system" })
+        }
+        res.send(users)
+    } catch (err) {
+        res.status(500).send({ message: "Server internal error" })
+        console.log(err)
+    }
+}
+
+const findById = async (req, res) => {
+
+    try {
+        const user = req.user
+        res.send(user)
+    } catch (err) {
+        res.status(500).send({ message: "Server internal error" })
+        console.log(err)
     }
 
-    const user = await userService.createService(req.body)
+}
 
-    if (!user) {
-        return res.status(400).send({ Message: "Error creating user" })
-    }
+const update = async (req, res) => {
 
-    res.status(201).send({
-        message: "Usuario criado com sucesso!",
-        user: {
-            id: user._id,
+    try {
+        const { name, username, email, password, avatar, background } = req.body
+        if (!name && !username && !email && !password && !avatar && !background) {
+            res.status(400).json("Submit at least on field for update")
+        }
+        const { id, user } = req
+        await userService.updateService(
+            id,
             name,
             username,
             email,
             avatar,
             background
-        }
-    })
+        )
+        res.send({ message: "User successfully update!" })
+    } catch (err) {
+        res.status(500).send({ message: "Server internal error" })
+        console.log(err)
+    }
 }
 
-const findAll = async (req, res) => {
-
-    const users = await userService.findAllService()
-
-    if (users === 0) {
-        return res.status(400).send({ message: "ther are no users in the system" })
-    }
-
-    res.send(users)
-}
-
-const findById = async (req, res) => {
-    const id = req.params.id
-
-    if (verifyId(id)) {
-        return res.status(400).send({ message: "invalid Id" })
-    }
-
-    const user = await userService.findByIdService(id)
-
-    if (!user) {
-        return res.status(400).send({ message: "this users doesn't exists" })
-    }
-
-    res.send(user)
-}
-
-const update = async (req, res) => {
-    const { name, username, email, password, avatar, background } = req.body
-
-    if (!name && !username && !email && !password && !avatar && !background) {
-        res.status(400).json("Submit at least on field for update")
-    }
-
-    const id = req.params.id
-
-    if (verifyId(id)) {
-        return res.status(400).send({ message: "invalid Id" })
-    }
-
-    const user = await userService.findByIdService(id)
-
-    if (!user) {
-        return res.status(400).send({ message: "this users doesn't exists" })
-    }
-
-    await userService.updateService(
-        id,
-        name,
-        username,
-        email,
-        avatar,
-        background
-    )
-
-    res.send({message: "User successfully update!"})
-}
-
-module.exports = {
+export default {
     create,
     findAll,
     findById,
