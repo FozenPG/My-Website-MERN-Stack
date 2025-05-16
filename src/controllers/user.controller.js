@@ -1,6 +1,13 @@
 const userService = require("../services/user.service")
 const mongoose = require("mongoose")
 
+function verifyId(id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return true
+    }
+    return false
+}
+
 const create = async (req, res) => {
     const { name, username, email, password, avatar, background } = req.body
 
@@ -11,7 +18,7 @@ const create = async (req, res) => {
     const user = await userService.createService(req.body)
 
     if (!user) {
-        return res.status(400).send({Message: "Error creating user"})
+        return res.status(400).send({ Message: "Error creating user" })
     }
 
     res.status(201).send({
@@ -32,7 +39,7 @@ const findAll = async (req, res) => {
     const users = await userService.findAllService()
 
     if (users === 0) {
-        return res.status(400).send({message: "ther are no users in the system"})
+        return res.status(400).send({ message: "ther are no users in the system" })
     }
 
     res.send(users)
@@ -40,21 +47,54 @@ const findAll = async (req, res) => {
 
 const findById = async (req, res) => {
     const id = req.params.id
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({message: "invalid Id"})
+
+    if (verifyId(id)) {
+        return res.status(400).send({ message: "invalid Id" })
     }
 
     const user = await userService.findByIdService(id)
 
     if (!user) {
-        return res.status(400).send({message: "this users doesn't exists"})
+        return res.status(400).send({ message: "this users doesn't exists" })
     }
 
     res.send(user)
 }
-module.exports = { 
+
+const update = async (req, res) => {
+    const { name, username, email, password, avatar, background } = req.body
+
+    if (!name && !username && !email && !password && !avatar && !background) {
+        res.status(400).json("Submit at least on field for update")
+    }
+
+    const id = req.params.id
+
+    if (verifyId(id)) {
+        return res.status(400).send({ message: "invalid Id" })
+    }
+
+    const user = await userService.findByIdService(id)
+
+    if (!user) {
+        return res.status(400).send({ message: "this users doesn't exists" })
+    }
+
+    await userService.updateService(
+        id,
+        name,
+        username,
+        email,
+        avatar,
+        background
+    )
+
+    res.send({message: "User successfully update!"})
+}
+
+module.exports = {
     create,
     findAll,
-    findById
+    findById,
+    update
 }
